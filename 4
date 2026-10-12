@@ -1,0 +1,77 @@
+
+#include <stdio.h>
+#include <math.h>
+#include <float.h>
+
+#define N 6
+#define D 2
+#define K 3
+
+float data[N][D] = {
+    {1.0, 1.5}, {1.5, 1.8},
+    {5.0, 5.5}, {5.5, 5.0},
+    {9.0, 9.5}, {9.5, 9.0}
+};
+
+float cent[K][D];
+int cluster[N];
+
+int main() {
+    int i, j, k, iter, best;
+    float dist, minDist, sse = 0;
+
+    for (k = 0; k < K; k++)
+        for (j = 0; j < D; j++)
+            cent[k][j] = data[k * 2][j];
+
+    for (iter = 0; iter < 10; iter++) {
+        for (i = 0; i < N; i++) {
+            minDist = FLT_MAX;
+            for (k = 0; k < K; k++) {
+                dist = 0;
+                for (j = 0; j < D; j++)
+                    dist += pow(data[i][j] - cent[k][j], 2);
+
+                if (dist < minDist) {
+                    minDist = dist;
+                    best = k;
+                }
+            }
+            cluster[i] = best;
+        }
+
+        float sum[K][D] = {0};
+        int count[K] = {0};
+
+        for (i = 0; i < N; i++) {
+            count[cluster[i]]++;
+            for (j = 0; j < D; j++)
+                sum[cluster[i]][j] += data[i][j];
+        }
+
+        for (k = 0; k < K; k++)
+            if (count[k] > 0)
+                for (j = 0; j < D; j++)
+                    cent[k][j] = sum[k][j] / count[k];
+    }
+
+    sse = 0;
+    printf("K-Means Clustering (K = %d)\n", K);
+
+    for (i = 0; i < N; i++) {
+        printf("Point (%.1f, %.1f) -> Cluster %d\n",
+               data[i][0], data[i][1], cluster[i]);
+
+        for (j = 0; j < D; j++)
+            sse += pow(data[i][j] - cent[cluster[i]][j], 2);
+    }
+
+    printf("\nCentroids:\n");
+    for (k = 0; k < K; k++)
+        printf("Cluster %d: (%.2f, %.2f)\n",
+               k, cent[k][0], cent[k][1]);
+
+    printf("\nSSE = %.2f\n", sse);
+
+    return 0;
+}
